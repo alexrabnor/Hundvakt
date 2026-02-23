@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
-import { Plus, Edit2, Trash2, Phone, Mail, MapPin } from 'lucide-react';
+import { Plus, Edit2, Trash2, Phone, Mail, MapPin, Users } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 function Customers() {
