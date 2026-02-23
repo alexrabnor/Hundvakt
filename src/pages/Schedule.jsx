@@ -144,7 +144,7 @@ function Schedule() {
                         </button>
                         <button
                             onClick={handleSave}
-                            className="flex-1 flex justify-center items-center py-3 bg-emerald-600 text-white font-bold rounded-xl shadow-sm hover:bg-emerald-700 transition-all hover:-translate-y-0.5"
+                            className="flex-1 flex justify-center items-center py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold rounded-xl shadow-emerald-900/20 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
                         >
                             <Save size={18} className="mr-2" />
                             Spara schema
@@ -154,7 +154,7 @@ function Schedule() {
                     {/* Dog List */}
                     <div className="space-y-4">
                         {dogs.length === 0 ? (
-                            <div className="text-center py-12 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-stone-200/50">
+                            <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border border-stone-200/50">
                                 <p className="text-stone-500">Inga hundar i registret ännu.</p>
                             </div>
                         ) : (

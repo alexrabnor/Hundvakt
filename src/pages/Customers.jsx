@@ -117,7 +117,7 @@ function Customers() {
                 {!isEditing && (
                     <button
                         onClick={() => handleOpenForm()}
-                        className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl shadow-sm transition-all hover:scale-105 active:scale-95"
+                        className="flex items-center space-x-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white px-5 py-2.5 rounded-xl shadow-emerald-900/20 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95"
                     >
                         <Plus size={20} />
                         <span className="font-medium">Ny kund</span>
@@ -237,17 +237,21 @@ function Customers() {
                     </form>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 fill-mode-both">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 fill-mode-both">
                     {customers.length === 0 ? (
-                        <div className="col-span-full text-center py-12 bg-white rounded-2xl shadow-sm">
-                            <p className="text-stone-500">Inga kunder registrerade ännu.</p>
+                        <div className="col-span-full bg-white/80 backdrop-blur-sm p-12 rounded-3xl shadow-sm border border-stone-100/50 text-center flex flex-col items-center justify-center space-y-3">
+                            <div className="p-4 bg-stone-50 rounded-full text-stone-400 mb-2">
+                                <Users size={32} />
+                            </div>
+                            <p className="text-stone-600 text-lg font-medium">Inga kunder ännu.</p>
+                            <p className="text-stone-400 text-sm">Klicka på "Ny kund" för att komma igång.</p>
                         </div>
                     ) : (
                         customers.map(customer => {
                             const customerDogs = dogs.filter(d => d.customerId === customer.id);
 
                             return (
-                                <div key={customer.id} className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 flex flex-col justify-between">
+                                <div key={customer.id} className="bg-white/90 backdrop-blur-sm p-6 rounded-3xl shadow-sm border border-stone-200/50 flex flex-col justify-between transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/5">
                                     <div>
                                         <h3 className="text-xl font-bold text-stone-800 mb-3">{customer.name}</h3>
 

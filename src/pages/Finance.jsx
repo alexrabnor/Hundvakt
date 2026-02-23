@@ -110,7 +110,7 @@ function Finance() {
                 <h1 className="text-2xl font-bold text-stone-800">Ekonomi & Budget</h1>
                 <button
                     onClick={handleExportCSV}
-                    className="flex items-center space-x-2 bg-stone-800 hover:bg-stone-900 text-white px-4 py-2 rounded-xl shadow-sm transition-colors text-sm font-medium"
+                    className="flex items-center space-x-2 bg-gradient-to-r from-stone-800 to-stone-700 hover:from-stone-900 hover:to-stone-800 text-white px-5 py-2.5 rounded-xl shadow-stone-900/20 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95 text-sm font-medium"
                 >
                     <Download size={16} />
                     <span className="hidden sm:inline">Exportera Månad (CSV)</span>
@@ -118,9 +118,9 @@ function Finance() {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 fill-mode-both">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 fill-mode-both">
                 {/* Denna Vecka */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 flex flex-col justify-between">
+                <div className="bg-white/90 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-stone-200/50 flex flex-col justify-between transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/5">
                     <div>
                         <div className="flex items-center gap-2 mb-2 text-stone-500 font-medium">
                             <TrendingUp size={18} />
@@ -138,7 +138,7 @@ function Finance() {
                 </div>
 
                 {/* Denna Månad */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 flex flex-col justify-between">
+                <div className="bg-white/90 backdrop-blur-sm p-8 rounded-3xl shadow-sm border border-stone-200/50 flex flex-col justify-between transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/5">
                     <div>
                         <div className="flex items-center gap-2 mb-2 text-stone-500 font-medium">
                             <Wallet size={18} />

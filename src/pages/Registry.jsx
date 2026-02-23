@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
-import { Plus, Edit2, Trash2, Phone, Stethoscope } from 'lucide-react';
+import { Plus, Edit2, Trash2, Phone, Stethoscope, FileText } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 function Registry() {
@@ -149,14 +149,18 @@ function Registry() {
                     </form>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 fill-mode-both">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 fill-mode-both">
                     {dogs.length === 0 ? (
-                        <div className="col-span-full text-center py-12 bg-white rounded-2xl shadow-sm">
-                            <p className="text-stone-500">Inga hundar registrerade ännu.</p>
+                        <div className="col-span-full bg-white/80 backdrop-blur-sm p-12 rounded-3xl shadow-sm border border-stone-100/50 text-center flex flex-col items-center justify-center space-y-3">
+                            <div className="p-4 bg-stone-50 rounded-full text-stone-400 mb-2">
+                                <FileText size={32} />
+                            </div>
+                            <p className="text-stone-600 text-lg font-medium">Inga hundar ännu.</p>
+                            <p className="text-stone-400 text-sm">Lägg till hundar via Kundregistret.</p>
                         </div>
                     ) : (
                         dogs.map(dog => (
-                            <div key={dog.id} className="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 flex flex-col justify-between">
+                            <div key={dog.id} className="bg-white/90 backdrop-blur-sm p-6 rounded-3xl shadow-sm border border-stone-200/50 flex flex-col justify-between transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/5">
                                 <div>
                                     <div className="flex justify-between items-start mb-2">
                                         <h3 className="text-xl font-bold text-stone-800">{dog.name}</h3>

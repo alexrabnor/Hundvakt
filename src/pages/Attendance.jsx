@@ -112,14 +112,22 @@ function Attendance() {
             </div>
 
             {isWeekend ? (
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-stone-100 text-center">
-                    <p className="text-stone-500 text-lg">Det är helg! Ingen schemalagd närvaro.</p>
+                <div className="bg-white/80 backdrop-blur-sm p-12 rounded-3xl shadow-sm border border-stone-100/50 text-center flex flex-col items-center justify-center space-y-3">
+                    <div className="p-4 bg-emerald-50 rounded-full text-emerald-500 mb-2">
+                        <Clock size={32} />
+                    </div>
+                    <p className="text-stone-600 text-lg font-medium">Det är helg!</p>
+                    <p className="text-stone-400 text-sm">Ingen schemalagd närvaro.</p>
                 </div>
             ) : (
                 <div className="space-y-4">
                     {scheduledDogs.length === 0 ? (
-                        <div className="bg-white p-8 rounded-2xl shadow-sm border border-stone-100 text-center">
-                            <p className="text-stone-500 text-lg">Inga hundar schemalagda för idag.</p>
+                        <div className="bg-white/80 backdrop-blur-sm p-12 rounded-3xl shadow-sm border border-stone-100/50 text-center flex flex-col items-center justify-center space-y-3">
+                            <div className="p-4 bg-stone-50 rounded-full text-stone-400 mb-2">
+                                <CheckCircle2 size={32} />
+                            </div>
+                            <p className="text-stone-600 text-lg font-medium">Helt tomt idag.</p>
+                            <p className="text-stone-400 text-sm">Inga hundar schemalagda för idag.</p>
                         </div>
                     ) : (
                         scheduledDogs.map(dog => {
@@ -130,7 +138,7 @@ function Attendance() {
                             return (
                                 <div
                                     key={dog.id}
-                                    className={`p-5 rounded-2xl shadow-sm border transition-colors ${isCheckedIn ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-stone-200'
+                                    className={`p-5 rounded-3xl border transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/5 ${isCheckedIn ? 'bg-emerald-50/80 backdrop-blur-sm border-emerald-200 shadow-sm' : 'bg-white/90 backdrop-blur-sm border-stone-200/50 shadow-sm'
                                         }`}
                                 >
                                     <div className="flex justify-between items-center mb-4">
@@ -162,7 +170,7 @@ function Attendance() {
                                         {!isCheckedIn ? (
                                             <button
                                                 onClick={() => handleCheckIn(dog.id)}
-                                                className="flex-1 flex justify-center items-center py-3 bg-emerald-600 text-white font-medium rounded-xl shadow-sm hover:bg-emerald-700 transition-colors"
+                                                className="flex-1 flex justify-center items-center py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-medium rounded-xl shadow-emerald-900/20 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
                                             >
                                                 Checka in nu
                                             </button>
