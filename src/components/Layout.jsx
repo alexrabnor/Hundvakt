@@ -1,13 +1,14 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Users, Calendar, CheckSquare, DollarSign } from 'lucide-react';
+import { Users, FileText, Calendar, CheckSquare, DollarSign } from 'lucide-react';
 
 function Layout() {
     const navItems = [
         { name: 'Närvaro', path: '/attendance', icon: CheckSquare },
         { name: 'Veckoplan', path: '/schedule', icon: Calendar },
         { name: 'Ekonomi', path: '/finance', icon: DollarSign },
-        { name: 'Register', path: '/registry', icon: Users },
+        { name: 'Hundar', path: '/registry', icon: FileText },
+        { name: 'Kunder', path: '/customers', icon: Users },
     ];
 
     return (

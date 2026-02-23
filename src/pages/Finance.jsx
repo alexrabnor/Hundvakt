@@ -118,7 +118,7 @@ function Finance() {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 fill-mode-both">
                 {/* Denna Vecka */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 flex flex-col justify-between">
                     <div>

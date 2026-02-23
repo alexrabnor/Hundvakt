@@ -4,15 +4,14 @@ import { Plus, Edit2, Trash2, Phone, Stethoscope } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 function Registry() {
-    const { dogs, addDog, updateDog, removeDog } = useAppData();
+    const { dogs, addDog, updateDog, removeDog, customers } = useAppData();
     const [isEditing, setIsEditing] = useState(false);
     const [currentDog, setCurrentDog] = useState(null);
 
     const defaultFormState = {
         name: '',
         dailyPrice: '',
-        ownerName: '',
-        ownerPhone: '',
+        customerId: '',
         vetPhone: '',
         birthday: '',
         notes: ''
@@ -57,7 +56,7 @@ function Registry() {
                 {!isEditing && (
                     <button
                         onClick={() => handleOpenForm()}
-                        className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl shadow-sm transition-colors"
+                        className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl shadow-sm transition-all hover:scale-105 active:scale-95"
                     >
                         <Plus size={20} />
                         <span className="font-medium">Ny hund</span>
@@ -66,7 +65,7 @@ function Registry() {
             </div>
 
             {isEditing ? (
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <h2 className="text-xl font-semibold mb-4 text-stone-800">
                         {currentDog ? 'Redigera hund' : 'Lägg till ny hund'}
                     </h2>
@@ -95,23 +94,21 @@ function Registry() {
                                     placeholder="300"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1">Ägarens namn</label>
-                                <input
-                                    type="text"
-                                    value={formData.ownerName}
-                                    onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-stone-700 mb-1">Ägare (Kund)</label>
+                                <select
+                                    value={formData.customerId}
+                                    onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
                                     className="w-full border border-stone-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-stone-50"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1">Ägarens tel</label>
-                                <input
-                                    type="tel"
-                                    value={formData.ownerPhone}
-                                    onChange={(e) => setFormData({ ...formData, ownerPhone: e.target.value })}
-                                    className="w-full border border-stone-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-stone-50"
-                                />
+                                >
+                                    <option value="">-- Välj en ägare --</option>
+                                    {customers.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name} {c.phone ? `(${c.phone})` : ''}</option>
+                                    ))}
+                                </select>
+                                {customers.length === 0 && (
+                                    <p className="text-xs text-orange-600 mt-1">Du måste skapa en kund i Kundregistret först.</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-stone-700 mb-1">Veterinär tel</label>
@@ -160,7 +157,7 @@ function Registry() {
                     </form>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150 fill-mode-both">
                     {dogs.length === 0 ? (
                         <div className="col-span-full text-center py-12 bg-white rounded-2xl shadow-sm">
                             <p className="text-stone-500">Inga hundar registrerade ännu.</p>
@@ -177,14 +174,21 @@ function Registry() {
                                     </div>
 
                                     <div className="space-y-2 mt-4 text-sm text-stone-600">
-                                        {dog.ownerName && (
-                                            <p><span className="font-semibold">Ägare:</span> {dog.ownerName}</p>
-                                        )}
-                                        {dog.ownerPhone && (
-                                            <a href={`tel:${dog.ownerPhone}`} className="flex items-center text-emerald-600 hover:underline">
-                                                <Phone size={14} className="mr-2" /> {dog.ownerPhone}
-                                            </a>
-                                        )}
+                                        {dog.customerId && (() => {
+                                            const owner = customers.find(c => c.id === dog.customerId);
+                                            return owner ? (
+                                                <>
+                                                    <p className="flex items-center"><span className="font-semibold w-16">Ägare:</span> {owner.name}</p>
+                                                    {owner.phone && (
+                                                        <a href={`tel:${owner.phone}`} className="flex items-center text-emerald-600 hover:underline">
+                                                            <Phone size={14} className="mr-2 w-16 text-stone-400" /> {owner.phone}
+                                                        </a>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <p className="text-red-500 italic">Okänd ägare</p>
+                                            );
+                                        })()}
                                         {dog.vetPhone && (
                                             <a href={`tel:${dog.vetPhone}`} className="flex items-center text-orange-500 hover:underline mt-1">
                                                 <Stethoscope size={14} className="mr-2" /> VET: {dog.vetPhone}

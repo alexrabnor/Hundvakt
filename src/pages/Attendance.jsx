@@ -6,7 +6,7 @@ import { CheckCircle2, RotateCcw, MessageSquare, Clock } from 'lucide-react';
 const DAYS = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
 
 function Attendance() {
-    const { dogs, schedules, attendance, setAttendance } = useAppData();
+    const { dogs, schedules, attendance, setAttendance, customers } = useAppData();
     const [currentDate, setCurrentDate] = useState(new Date());
 
     // Date Keys
@@ -92,11 +92,14 @@ function Attendance() {
     };
 
     const getSMSHref = (dog) => {
+        const owner = customers.find(c => c.id === dog.customerId);
+        if (!owner || !owner.phone) return null;
+
         const dogPlan = weekSchedule[dog.id] || {};
         const pickUpTime = dogPlan.pickUpTime || 'i eftermiddag';
         const message = `Hej! 🐾 ${dog.name} har haft en toppenbra dag här idag. Det går jättebra att hämta kl ${pickUpTime}. Vi ses!`;
         const encodedBody = encodeURIComponent(message);
-        return `sms:${dog.ownerPhone}?body=${encodedBody}`;
+        return `sms:${owner.phone}?body=${encodedBody}`;
     };
 
     return (
@@ -191,19 +194,26 @@ function Attendance() {
                                                     </>
                                                 )}
 
-                                                {dog.ownerPhone ? (
-                                                    <a
-                                                        href={getSMSHref(dog)}
-                                                        className="flex-1 flex justify-center items-center py-3 bg-stone-800 text-white font-medium rounded-xl shadow-sm hover:bg-stone-900 transition-colors"
-                                                    >
-                                                        <MessageSquare size={18} className="mr-2" />
-                                                        Sms
-                                                    </a>
-                                                ) : (
-                                                    <div className="flex-1 py-3 text-center text-stone-400 text-sm flex items-center justify-center bg-stone-100 rounded-xl">
-                                                        Inget tel
-                                                    </div>
-                                                )}
+                                                {(() => {
+                                                    const owner = customers.find(c => c.id === dog.customerId);
+                                                    if (owner && owner.phone) {
+                                                        return (
+                                                            <a
+                                                                href={getSMSHref(dog)}
+                                                                className="flex-1 flex justify-center items-center py-3 bg-stone-800 text-white font-medium rounded-xl shadow-sm hover:bg-stone-900 transition-colors"
+                                                            >
+                                                                <MessageSquare size={18} className="mr-2" />
+                                                                Sms
+                                                            </a>
+                                                        );
+                                                    } else {
+                                                        return (
+                                                            <div className="flex-1 py-3 text-center text-stone-400 text-sm flex items-center justify-center bg-stone-100 rounded-xl">
+                                                                Inget tel
+                                                            </div>
+                                                        );
+                                                    }
+                                                })()}
                                             </>
                                         )}
                                     </div>
