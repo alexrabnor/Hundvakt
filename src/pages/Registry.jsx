@@ -53,21 +53,13 @@ function Registry() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-stone-800">Hundregister</h1>
-                {!isEditing && (
-                    <button
-                        onClick={() => handleOpenForm()}
-                        className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl shadow-sm transition-all hover:scale-105 active:scale-95"
-                    >
-                        <Plus size={20} />
-                        <span className="font-medium">Ny hund</span>
-                    </button>
-                )}
+                {/* Ny hund-knapp borttagen. Hundar läggs nu till via Kundregistret. */}
             </div>
 
             {isEditing ? (
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <h2 className="text-xl font-semibold mb-4 text-stone-800">
-                        {currentDog ? 'Redigera hund' : 'Lägg till ny hund'}
+                        Redigera hund
                     </h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

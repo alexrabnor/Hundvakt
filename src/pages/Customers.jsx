@@ -4,7 +4,7 @@ import { Plus, Edit2, Trash2, Phone, Mail, MapPin } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 function Customers() {
-    const { customers, addCustomer, updateCustomer, removeCustomer, dogs } = useAppData();
+    const { customers, addCustomer, updateCustomer, removeCustomer, dogs, addDog, updateDog, removeDog } = useAppData();
     const [isEditing, setIsEditing] = useState(false);
     const [currentCustomer, setCurrentCustomer] = useState(null);
 
@@ -15,14 +15,17 @@ function Customers() {
         address: ''
     };
     const [formData, setFormData] = useState(defaultFormState);
+    const [formDogs, setFormDogs] = useState([]);
 
     const handleOpenForm = (customer = null) => {
         if (customer) {
             setFormData(customer);
+            setFormDogs(dogs.filter(d => d.customerId === customer.id));
             setIsEditing(true);
             setCurrentCustomer(customer.id);
         } else {
             setFormData(defaultFormState);
+            setFormDogs([]);
             setIsEditing(true);
             setCurrentCustomer(null);
         }
@@ -33,28 +36,77 @@ function Customers() {
         setCurrentCustomer(null);
     };
 
+    const addFormDog = () => {
+        setFormDogs([...formDogs, { id: uuidv4(), name: '', dailyPrice: '', notes: '', vetPhone: '', birthday: '' }]);
+    };
+
+    const updateFormDog = (index, field, value) => {
+        const newDogs = [...formDogs];
+        newDogs[index] = { ...newDogs[index], [field]: value };
+        setFormDogs(newDogs);
+    };
+
+    const removeFormDog = (index) => {
+        const dogToRemove = formDogs[index];
+        if (dogToRemove.createdAt) {
+            if (window.confirm(`Vill du ta bort hunden ${dogToRemove.name} från systemet helt?`)) {
+                removeDog(dogToRemove.id);
+                const newDogs = [...formDogs];
+                newDogs.splice(index, 1);
+                setFormDogs(newDogs);
+            }
+        } else {
+            const newDogs = [...formDogs];
+            newDogs.splice(index, 1);
+            setFormDogs(newDogs);
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
+        let customerIdToUse = currentCustomer;
+
         if (currentCustomer) {
             updateCustomer(currentCustomer, { ...formData, id: currentCustomer });
         } else {
+            customerIdToUse = uuidv4();
             addCustomer({
                 ...formData,
-                id: uuidv4(),
+                id: customerIdToUse,
                 createdAt: new Date().toISOString()
             });
         }
+
+        // Spara uppdaterade/nya hundar
+        formDogs.forEach(dog => {
+            if (dog.createdAt) {
+                // Befintlig hund uppdateras
+                updateDog(dog.id, { ...dog, customerId: customerIdToUse });
+            } else {
+                // Ny hund läggs till
+                addDog({
+                    ...dog,
+                    customerId: customerIdToUse,
+                    createdAt: new Date().toISOString()
+                });
+            }
+        });
+
         handleCloseForm();
     };
 
     const safeRemove = (id, name) => {
         const hasDogs = dogs.some(d => d.customerId === id);
         if (hasDogs) {
-            alert(`Du kan inte ta bort ${name} eftersom de har hundar registrerade. Ta bort hundarna först.`);
-            return;
-        }
-        if (window.confirm(`Är du säker på att du vill ta bort kunden ${name}?`)) {
-            removeCustomer(id);
+            if (window.confirm(`Kunden ${name} har hundar kopplade. Vill du ta bort kunden OCH alla dess hundar permanent?`)) {
+                const customerDogs = dogs.filter(d => d.customerId === id);
+                customerDogs.forEach(d => removeDog(d.id));
+                removeCustomer(id);
+            }
+        } else {
+            if (window.confirm(`Är du säker på att du vill ta bort kunden ${name}?`)) {
+                removeCustomer(id);
+            }
         }
     };
 
@@ -123,7 +175,51 @@ function Customers() {
                                 />
                             </div>
                         </div>
-                        <div className="flex justify-end space-x-3 pt-4">
+
+                        {/* Hund-sektion i formuläret */}
+                        <div className="mt-8 pt-6 border-t border-stone-100">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-semibold text-stone-800">Kopplade hundar</h3>
+                            </div>
+
+                            {formDogs.map((dog, index) => (
+                                <div key={dog.id} className="p-4 bg-stone-50 border border-stone-200 rounded-xl mb-3 space-y-3 relative group">
+                                    <button
+                                        type="button"
+                                        onClick={() => removeFormDog(index)}
+                                        className="absolute top-4 right-4 text-stone-400 hover:text-red-500"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+
+                                    <h4 className="font-medium text-emerald-800">Hund {index + 1}</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-medium text-stone-500 mb-1">Namn *</label>
+                                            <input required type="text" placeholder="Fido" value={dog.name} onChange={(e) => updateFormDog(index, 'name', e.target.value)} className="w-full border border-stone-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-stone-500 mb-1">Dagspris (kr) *</label>
+                                            <input required type="number" placeholder="300" value={dog.dailyPrice} onChange={(e) => updateFormDog(index, 'dailyPrice', e.target.value)} className="w-full border border-stone-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-xs font-medium text-stone-500 mb-1">Ev. Anteckningar / Varningar</label>
+                                            <input type="text" placeholder="Allergier..." value={dog.notes || ''} onChange={(e) => updateFormDog(index, 'notes', e.target.value)} className="w-full border border-stone-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            <button
+                                type="button"
+                                onClick={addFormDog}
+                                className="text-emerald-600 font-medium hover:text-emerald-700 text-sm flex items-center mt-2 px-2 py-1 bg-emerald-50 rounded bg-opacity-50 hover:bg-opacity-100 transition-colors"
+                            >
+                                <Plus size={16} className="mr-1" /> Lägg till ännu en hund
+                            </button>
+                        </div>
+
+                        <div className="flex justify-end space-x-3 pt-6 mt-4">
                             <button
                                 type="button"
                                 onClick={handleCloseForm}
@@ -135,7 +231,7 @@ function Customers() {
                                 type="submit"
                                 className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-sm transition-colors"
                             >
-                                Spara
+                                Spara Kund & Hundar
                             </button>
                         </div>
                     </form>
@@ -179,7 +275,7 @@ function Customers() {
                                                 {customerDogs.length > 0 ? (
                                                     customerDogs.map(d => (
                                                         <span key={d.id} className="bg-stone-100 text-stone-700 px-2.5 py-1 rounded-md text-xs font-semibold">
-                                                            {d.name}
+                                                            {d.name} ({d.dailyPrice} kr)
                                                         </span>
                                                     ))
                                                 ) : (
