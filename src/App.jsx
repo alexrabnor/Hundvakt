@@ -1,11 +1,23 @@
 import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Intro from './pages/Intro';
+import Registry from './pages/Registry';
+import Schedule from './pages/Schedule';
+import Attendance from './pages/Attendance';
+import Finance from './pages/Finance';
 
 function App() {
   return (
-    <div className="min-h-screen p-8 text-stone-800">
-      <h1 className="text-3xl font-bold text-emerald-600 mb-4">Hundvakt App is Running 🐕</h1>
-      <p className="text-stone-600">Tailwind CSS v4 and PWA support are successfully configured!</p>
-    </div>
+    <Routes>
+      <Route path="/" element={<Intro />} />
+      <Route element={<Layout />}>
+        <Route path="/attendance" element={<Attendance />} />
+        <Route path="/schedule" element={<Schedule />} />
+        <Route path="/registry" element={<Registry />} />
+        <Route path="/finance" element={<Finance />} />
+      </Route>
+    </Routes>
   );
 }
 

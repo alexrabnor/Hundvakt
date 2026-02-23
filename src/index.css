@@ -1,8 +1,11 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   background-color: #F5F5DC;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-image: radial-gradient(at 0% 0%, hsla(140, 25%, 90%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(38, 50%, 90%, 1) 0px, transparent 50%);
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
 }
 
 body {
@@ -10,4 +13,13 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: #292524;
+  /* stone-800 */
+}
+
+/* Smooth page transitions and base animations */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
