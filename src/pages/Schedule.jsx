@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppData } from '../context/AppDataContext';
+import { useToast } from '../context/ToastContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { ChevronLeft, ChevronRight, Copy, Save, Clock } from 'lucide-react';
 import { getISOWeek, getYear, addWeeks, subWeeks } from 'date-fns';
 
@@ -7,6 +9,8 @@ const DAYS = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
 
 function Schedule() {
     const { dogs, schedules, setSchedules, copySchedule } = useAppData();
+    const { toast } = useToast();
+    const { confirm } = useConfirm();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [activeTab, setActiveTab] = useState('plan'); // 'plan' | 'overview'
 
@@ -66,13 +70,16 @@ function Schedule() {
             ...prev,
             [weekKey]: toSave
         }));
-        alert('Veckoschemat sparat!');
+        toast('Veckoschemat sparat!');
     };
 
-    const handleCopyPrevious = () => {
-        if (window.confirm('Vill du kopiera förra veckans schema? Detta skriver över eventuella osparade ändringar.')) {
-            copySchedule(prevWeekKey, weekKey);
-        }
+    const handleCopyPrevious = async () => {
+        const ok = await confirm({
+            title: 'Kopiera förra veckan',
+            message: 'Vill du kopiera förra veckans schema? Detta skriver över eventuella osparade ändringar.',
+            confirmLabel: 'Ja, kopiera'
+        });
+        if (ok) copySchedule(prevWeekKey, weekKey);
     };
 
     // Derived data for the Overview tab

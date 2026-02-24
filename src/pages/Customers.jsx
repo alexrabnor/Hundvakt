@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { Plus, Edit2, Trash2, Phone, Mail, MapPin, Users } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 function Customers() {
     const { customers, addCustomer, updateCustomer, removeCustomer, dogs, addDog, updateDog, removeDog } = useAppData();
+    const { confirm } = useConfirm();
     const [isEditing, setIsEditing] = useState(false);
     const [currentCustomer, setCurrentCustomer] = useState(null);
 
@@ -46,10 +48,16 @@ function Customers() {
         setFormDogs(newDogs);
     };
 
-    const removeFormDog = (index) => {
+    const removeFormDog = async (index) => {
         const dogToRemove = formDogs[index];
         if (dogToRemove.createdAt) {
-            if (window.confirm(`Vill du ta bort hunden ${dogToRemove.name} från systemet helt?`)) {
+            const ok = await confirm({
+                title: 'Ta bort hund',
+                message: `Vill du ta bort hunden ${dogToRemove.name} från systemet helt?`,
+                confirmLabel: 'Ja, ta bort',
+                variant: 'danger'
+            });
+            if (ok) {
                 removeDog(dogToRemove.id);
                 const newDogs = [...formDogs];
                 newDogs.splice(index, 1);
@@ -95,18 +103,23 @@ function Customers() {
         handleCloseForm();
     };
 
-    const safeRemove = (id, name) => {
+    const safeRemove = async (id, name) => {
         const hasDogs = dogs.some(d => d.customerId === id);
-        if (hasDogs) {
-            if (window.confirm(`Kunden ${name} har hundar kopplade. Vill du ta bort kunden OCH alla dess hundar permanent?`)) {
+        const message = hasDogs
+            ? `Kunden ${name} har hundar kopplade. Vill du ta bort kunden OCH alla dess hundar permanent?`
+            : `Är du säker på att du vill ta bort kunden ${name}?`;
+        const ok = await confirm({
+            title: 'Ta bort kund',
+            message,
+            confirmLabel: 'Ja, ta bort',
+            variant: 'danger'
+        });
+        if (ok) {
+            if (hasDogs) {
                 const customerDogs = dogs.filter(d => d.customerId === id);
                 customerDogs.forEach(d => removeDog(d.id));
-                removeCustomer(id);
             }
-        } else {
-            if (window.confirm(`Är du säker på att du vill ta bort kunden ${name}?`)) {
-                removeCustomer(id);
-            }
+            removeCustomer(id);
         }
     };
 

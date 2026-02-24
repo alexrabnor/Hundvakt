@@ -1,27 +1,112 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { v4 as uuidv4 } from 'uuid';
+import { db } from '../firebase';
+
+const DEFAULT_DATA = {
+    customers: [],
+    dogs: [],
+    schedules: {},
+    attendance: {}
+};
 
 const AppDataContext = createContext();
 
-export function AppDataProvider({ children }) {
-    const [customers, setCustomers] = useLocalStorage('hundvakt_customers', []);
-    const [dogs, setDogs] = useLocalStorage('hundvakt_dogs', []);
-    const [schedules, setSchedules] = useLocalStorage('hundvakt_schedules', {});
-    const [attendance, setAttendance] = useLocalStorage('hundvakt_attendance', {});
+export function AppDataProvider({ children, userId }) {
+    const [localCustomers, setLocalCustomers] = useLocalStorage('hundvakt_customers', []);
+    const [localDogs, setLocalDogs] = useLocalStorage('hundvakt_dogs', []);
+    const [localSchedules, setLocalSchedules] = useLocalStorage('hundvakt_schedules', {});
+    const [localAttendance, setLocalAttendance] = useLocalStorage('hundvakt_attendance', {});
 
-    // Migration Effect: Move legacy owner data from dogs to separate customers
+    const [firestoreData, setFirestoreData] = useState(null);
+    const [firestoreLoading, setFirestoreLoading] = useState(!!userId);
+
+    const useFirestore = !!userId;
+
+    const customers = useFirestore ? (firestoreData?.customers ?? []) : localCustomers;
+    const dogs = useFirestore ? (firestoreData?.dogs ?? []) : localDogs;
+    const schedules = useFirestore ? (firestoreData?.schedules ?? {}) : localSchedules;
+    const attendance = useFirestore ? (firestoreData?.attendance ?? {}) : localAttendance;
+
+    const setCustomers = useFirestore ? ((fn) => updateFirestore('customers', fn)) : setLocalCustomers;
+    const setDogs = useFirestore ? ((fn) => updateFirestore('dogs', fn)) : setLocalDogs;
+    const setSchedules = useFirestore ? ((fn) => updateFirestore('schedules', fn)) : setLocalSchedules;
+    const setAttendance = useFirestore ? ((fn) => updateFirestore('attendance', fn)) : setLocalAttendance;
+
     useEffect(() => {
+        if (!userId) {
+            setFirestoreData(null);
+            setFirestoreLoading(false);
+            return;
+        }
+        const userDocRef = doc(db, 'users', userId);
+        getDoc(userDocRef).then((snap) => {
+            if (snap.exists()) {
+                setFirestoreData(snap.data());
+            } else {
+                setFirestoreData(DEFAULT_DATA);
+            }
+        }).catch((err) => {
+            console.error('Firestore load error:', err);
+            setFirestoreData(DEFAULT_DATA);
+        }).finally(() => {
+            setFirestoreLoading(false);
+        });
+    }, [userId]);
+
+    const updateFirestore = async (field, updater) => {
+        const userDocRef = doc(db, 'users', userId);
+        const current = firestoreData || DEFAULT_DATA;
+        const currentVal = current[field] ?? (field === 'schedules' || field === 'attendance' ? {} : []);
+        const newVal = typeof updater === 'function' ? updater(currentVal) : updater;
+        const next = { ...current, [field]: newVal };
+        setFirestoreData(next);
+        try {
+            await setDoc(userDocRef, next);
+        } catch (err) {
+            console.error('Firestore save error:', err);
+            setFirestoreData(current);
+        }
+    };
+
+    const addCustomer = (customer) => setCustomers((prev) => [...prev, customer]);
+    const updateCustomer = (id, updatedCustomer) => setCustomers((prev) => prev.map((c) => (c.id === id ? updatedCustomer : c)));
+    const removeCustomer = (id) => setCustomers((prev) => prev.filter((c) => c.id !== id));
+
+    const addDog = (dog) => setDogs((prev) => [...prev, dog]);
+    const updateDog = (id, updatedDog) => setDogs((prev) => prev.map((d) => (d.id === id ? updatedDog : d)));
+    const removeDog = (id) => setDogs((prev) => prev.filter((d) => d.id !== id));
+
+    const copySchedule = (fromWeek, toWeek) => {
+        const src = schedules[fromWeek];
+        if (!src) return;
+        setSchedules((prev) => ({ ...prev, [toWeek]: JSON.parse(JSON.stringify(src)) }));
+    };
+
+    const importFromLocal = async () => {
+        const data = {
+            customers: localCustomers,
+            dogs: localDogs,
+            schedules: localSchedules,
+            attendance: localAttendance
+        };
+        const userDocRef = doc(db, 'users', userId);
+        await setDoc(userDocRef, data);
+        setFirestoreData(data);
+    };
+
+    const migrationRunRef = React.useRef(false);
+    useEffect(() => {
+        if (migrationRunRef.current || !customers?.length) return;
         let hasMigrated = false;
         let newCustomers = [...customers];
         let newDogs = [...dogs];
 
-        newDogs = newDogs.map(dog => {
+        newDogs = newDogs.map((dog) => {
             if (dog.ownerName || dog.ownerPhone) {
-                // Legacy dog found. Create a customer for it.
                 hasMigrated = true;
                 const newCustomerId = uuidv4();
-
                 newCustomers.push({
                     id: newCustomerId,
                     name: dog.ownerName || 'Okänd Ägare',
@@ -30,41 +115,20 @@ export function AppDataProvider({ children }) {
                     address: '',
                     createdAt: new Date().toISOString()
                 });
-
-                // Update dog to use customerId and remove old fields
-                const updatedDog = { ...dog, customerId: newCustomerId };
-                delete updatedDog.ownerName;
-                delete updatedDog.ownerPhone;
-                return updatedDog;
+                const updated = { ...dog, customerId: newCustomerId };
+                delete updated.ownerName;
+                delete updated.ownerPhone;
+                return updated;
             }
             return dog;
         });
 
         if (hasMigrated) {
-            setCustomers(newCustomers);
-            setDogs(newDogs);
-            console.log("Migrerade gamla hundägare till kundregistret.");
+            migrationRunRef.current = true;
+            setCustomers(() => newCustomers);
+            setDogs(() => newDogs);
         }
-    }, [dogs, customers, setDogs, setCustomers]);
-
-    // Customer actions
-    const addCustomer = (customer) => setCustomers((prev) => [...prev, customer]);
-    const updateCustomer = (id, updatedCustomer) => setCustomers((prev) => prev.map((c) => (c.id === id ? updatedCustomer : c)));
-    const removeCustomer = (id) => setCustomers((prev) => prev.filter((c) => c.id !== id));
-
-    // Dog actions
-    const addDog = (dog) => setDogs((prev) => [...prev, dog]);
-    const updateDog = (id, updatedDog) => setDogs((prev) => prev.map((d) => (d.id === id ? updatedDog : d)));
-    const removeDog = (id) => setDogs((prev) => prev.filter((d) => d.id !== id));
-
-    // Schedule actions
-    const copySchedule = (fromWeek, toWeek) => {
-        if (!schedules[fromWeek]) return;
-        setSchedules((prev) => ({
-            ...prev,
-            [toWeek]: JSON.parse(JSON.stringify(schedules[fromWeek]))
-        }));
-    };
+    }, [customers, dogs, setCustomers, setDogs]);
 
     return (
         <AppDataContext.Provider
@@ -83,7 +147,11 @@ export function AppDataProvider({ children }) {
                 setSchedules,
                 copySchedule,
                 attendance,
-                setAttendance
+                setAttendance,
+                useFirestore,
+                firestoreLoading,
+                importFromLocal,
+                hasLocalData: localCustomers.length > 0 || localDogs.length > 0
             }}
         >
             {children}

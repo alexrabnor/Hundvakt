@@ -1,8 +1,10 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Users, FileText, Calendar, CheckSquare, DollarSign } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Users, FileText, Calendar, CheckSquare, DollarSign, LogOut } from 'lucide-react';
 
 function Layout() {
+    const { user, logOut } = useAuth();
     const navItems = [
         { name: 'Närvaro', path: '/attendance', icon: CheckSquare },
         { name: 'Veckoplan', path: '/schedule', icon: Calendar },
@@ -13,8 +15,19 @@ function Layout() {
 
     return (
         <div className="flex flex-col min-h-screen text-stone-800 pb-24 md:pb-0 selection:bg-emerald-200">
-            {/* Top decorative bar */}
-            <div className="h-2 w-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-800"></div>
+            {/* Top bar with logout */}
+            <div className="w-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-800 flex items-center justify-end pr-2 py-1.5 md:py-1">
+                {user && (
+                    <button
+                        onClick={() => logOut()}
+                        className="p-2 text-white/80 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                        title="Logga ut"
+                        aria-label="Logga ut"
+                    >
+                        <LogOut size={18} />
+                    </button>
+                )}
+            </div>
 
             <main className="flex-1 overflow-auto p-4 md:p-8 max-w-4xl mx-auto w-full animate-in fade-in duration-500">
                 <Outlet />

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAppData } from '../context/AppDataContext';
-import { getISOWeek, getYear, format, parseISO, isSameDay, isSameMonth } from 'date-fns';
-import { CheckCircle2, RotateCcw, MessageSquare, Clock } from 'lucide-react';
+import { getISOWeek, getYear, format, parseISO, addDays, subDays, isToday } from 'date-fns';
+import { sv } from 'date-fns/locale';
+import { CheckCircle2, RotateCcw, MessageSquare, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const DAYS = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
 
@@ -104,11 +105,35 @@ function Attendance() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col space-y-2">
-                <h1 className="text-2xl font-bold text-stone-800">Dagens Närvaro</h1>
-                <p className="text-stone-500 font-medium">
-                    {format(currentDate, 'yyyy-MM-dd')} {currentDayName ? `(${currentDayName})` : '(Helg)'}
-                </p>
+            <div className="flex flex-col space-y-4">
+                <h1 className="text-2xl font-bold text-stone-800">Närvaro</h1>
+
+                {/* Datumnavigering */}
+                <div className="flex items-center justify-between bg-white/80 backdrop-blur-md px-4 py-3 rounded-2xl shadow-sm border border-stone-200/50">
+                    <button
+                        onClick={() => setCurrentDate(subDays(currentDate, 1))}
+                        className="p-2 text-stone-600 hover:text-emerald-600 transition-colors rounded-lg hover:bg-stone-100"
+                        aria-label="Föregående dag"
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+                    <div className="text-center">
+                        <p className="text-lg font-bold text-emerald-800">
+                            {format(currentDate, 'EEEE d MMMM yyyy', { locale: sv })}
+                        </p>
+                        <p className="text-xs text-stone-500 font-medium">
+                            {currentDayName ? currentDayName : 'Helg'}
+                            {isToday(currentDate) && ' · Idag'}
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setCurrentDate(addDays(currentDate, 1))}
+                        className="p-2 text-stone-600 hover:text-emerald-600 transition-colors rounded-lg hover:bg-stone-100"
+                        aria-label="Nästa dag"
+                    >
+                        <ChevronRight size={24} />
+                    </button>
+                </div>
             </div>
 
             {isWeekend ? (

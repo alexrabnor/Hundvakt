@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { Plus, Edit2, Trash2, Phone, Stethoscope, FileText } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 function Registry() {
     const { dogs, addDog, updateDog, removeDog, customers } = useAppData();
+    const { confirm } = useConfirm();
     const [isEditing, setIsEditing] = useState(false);
     const [currentDog, setCurrentDog] = useState(null);
 
@@ -210,10 +212,14 @@ function Registry() {
                                         <Edit2 size={18} />
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            if (window.confirm('Är du säker på att du vill ta bort ' + dog.name + '?')) {
-                                                removeDog(dog.id);
-                                            }
+                                        onClick={async () => {
+                                            const ok = await confirm({
+                                                title: 'Ta bort hund',
+                                                message: `Är du säker på att du vill ta bort ${dog.name}?`,
+                                                confirmLabel: 'Ja, ta bort',
+                                                variant: 'danger'
+                                            });
+                                            if (ok) removeDog(dog.id);
                                         }}
                                         className="p-2 text-stone-500 hover:text-red-500 transition-colors"
                                     >
