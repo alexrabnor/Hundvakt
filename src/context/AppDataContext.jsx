@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { v4 as uuidv4 } from 'uuid';
@@ -20,7 +20,7 @@ export function AppDataProvider({ children, userId }) {
     const [localAttendance, setLocalAttendance] = useLocalStorage('hundvakt_attendance', {});
 
     const [firestoreData, setFirestoreData] = useState(null);
-    const firestoreDataRef = React.useRef(null);
+    const firestoreDataRef = useRef(null);
     const [firestoreLoading, setFirestoreLoading] = useState(!!userId);
 
     const useFirestore = !!userId;
@@ -30,13 +30,9 @@ export function AppDataProvider({ children, userId }) {
     const schedules = useFirestore ? (firestoreData?.schedules ?? {}) : localSchedules;
     const attendance = useFirestore ? (firestoreData?.attendance ?? {}) : localAttendance;
 
-    const setCustomers = useFirestore ? ((fn) => updateFirestore('customers', fn)) : setLocalCustomers;
-    const setDogs = useFirestore ? ((fn) => updateFirestore('dogs', fn)) : setLocalDogs;
-    const setSchedules = useFirestore ? ((fn) => updateFirestore('schedules', fn)) : setLocalSchedules;
-    const setAttendance = useFirestore ? ((fn) => updateFirestore('attendance', fn)) : setLocalAttendance;
-
     useEffect(() => {
         if (!userId) {
+            firestoreDataRef.current = null;
             setFirestoreData(null);
             setFirestoreLoading(false);
             return;
@@ -55,7 +51,9 @@ export function AppDataProvider({ children, userId }) {
         });
     }, [userId]);
 
-    const updateFirestore = async (field, updater) => {
+    // updateFirestore läser alltid från ref för att undvika stale closure
+    const updateFirestore = useCallback(async (field, updater) => {
+        if (!userId) return;
         const userDocRef = doc(db, 'users', userId);
         const current = firestoreDataRef.current || DEFAULT_DATA;
         const currentVal = current[field] ?? (field === 'schedules' || field === 'attendance' ? {} : []);
@@ -70,23 +68,44 @@ export function AppDataProvider({ children, userId }) {
             firestoreDataRef.current = current;
             setFirestoreData(current);
         }
-    };
+    }, [userId]);
 
-    const addCustomer = (customer) => setCustomers((prev) => [...prev, customer]);
-    const updateCustomer = (id, updatedCustomer) => setCustomers((prev) => prev.map((c) => (c.id === id ? updatedCustomer : c)));
-    const removeCustomer = (id) => setCustomers((prev) => prev.filter((c) => c.id !== id));
+    // Stabila setters med useCallback
+    const setCustomers = useCallback((fn) => {
+        if (useFirestore) updateFirestore('customers', fn);
+        else setLocalCustomers(fn);
+    }, [useFirestore, updateFirestore, setLocalCustomers]);
 
-    const addDog = (dog) => setDogs((prev) => [...prev, dog]);
-    const updateDog = (id, updatedDog) => setDogs((prev) => prev.map((d) => (d.id === id ? updatedDog : d)));
-    const removeDog = (id) => setDogs((prev) => prev.filter((d) => d.id !== id));
+    const setDogs = useCallback((fn) => {
+        if (useFirestore) updateFirestore('dogs', fn);
+        else setLocalDogs(fn);
+    }, [useFirestore, updateFirestore, setLocalDogs]);
 
-    const copySchedule = (fromWeek, toWeek) => {
-        const src = schedules[fromWeek];
+    const setSchedules = useCallback((fn) => {
+        if (useFirestore) updateFirestore('schedules', fn);
+        else setLocalSchedules(fn);
+    }, [useFirestore, updateFirestore, setLocalSchedules]);
+
+    const setAttendance = useCallback((fn) => {
+        if (useFirestore) updateFirestore('attendance', fn);
+        else setLocalAttendance(fn);
+    }, [useFirestore, updateFirestore, setLocalAttendance]);
+
+    const addCustomer = useCallback((customer) => setCustomers((prev) => [...prev, customer]), [setCustomers]);
+    const updateCustomer = useCallback((id, updated) => setCustomers((prev) => prev.map((c) => (c.id === id ? updated : c))), [setCustomers]);
+    const removeCustomer = useCallback((id) => setCustomers((prev) => prev.filter((c) => c.id !== id)), [setCustomers]);
+
+    const addDog = useCallback((dog) => setDogs((prev) => [...prev, dog]), [setDogs]);
+    const updateDog = useCallback((id, updated) => setDogs((prev) => prev.map((d) => (d.id === id ? updated : d))), [setDogs]);
+    const removeDog = useCallback((id) => setDogs((prev) => prev.filter((d) => d.id !== id)), [setDogs]);
+
+    const copySchedule = useCallback((fromWeek, toWeek) => {
+        const src = (firestoreDataRef.current?.schedules ?? {})[fromWeek];
         if (!src) return;
         setSchedules((prev) => ({ ...prev, [toWeek]: JSON.parse(JSON.stringify(src)) }));
-    };
+    }, [setSchedules]);
 
-    const importFromLocal = async () => {
+    const importFromLocal = useCallback(async () => {
         const data = {
             customers: localCustomers,
             dogs: localDogs,
@@ -97,16 +116,20 @@ export function AppDataProvider({ children, userId }) {
         await setDoc(userDocRef, data);
         firestoreDataRef.current = data;
         setFirestoreData(data);
-    };
+    }, [localCustomers, localDogs, localSchedules, localAttendance, userId]);
 
-    const migrationRunRef = React.useRef(false);
+    // Engångsmigration: hundar med ownerName/ownerPhone -> kunder
+    const migrationRunRef = useRef(false);
     useEffect(() => {
-        if (migrationRunRef.current || !customers?.length) return;
-        let hasMigrated = false;
-        let newCustomers = [...customers];
-        let newDogs = [...dogs];
+        if (migrationRunRef.current) return;
+        if (!firestoreData) return;
+        const currentDogs = firestoreData.dogs ?? [];
+        const currentCustomers = firestoreData.customers ?? [];
+        if (!currentDogs.length) return;
 
-        newDogs = newDogs.map((dog) => {
+        let hasMigrated = false;
+        const newCustomers = [...currentCustomers];
+        const newDogs = currentDogs.map((dog) => {
             if (dog.ownerName || dog.ownerPhone) {
                 hasMigrated = true;
                 const newCustomerId = uuidv4();
@@ -128,10 +151,15 @@ export function AppDataProvider({ children, userId }) {
 
         if (hasMigrated) {
             migrationRunRef.current = true;
-            setCustomers(() => newCustomers);
-            setDogs(() => newDogs);
+            // Spara båda fälten i en enda uppdatering för att undvika stale state
+            const userDocRef = doc(db, 'users', userId);
+            const next = { ...firestoreData, customers: newCustomers, dogs: newDogs };
+            firestoreDataRef.current = next;
+            setFirestoreData(next);
+            setDoc(userDocRef, next).catch(console.error);
         }
-    }, [customers, dogs, setCustomers, setDogs]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [firestoreData]);
 
     return (
         <AppDataContext.Provider
