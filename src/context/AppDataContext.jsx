@@ -20,6 +20,7 @@ export function AppDataProvider({ children, userId }) {
     const [localAttendance, setLocalAttendance] = useLocalStorage('hundvakt_attendance', {});
 
     const [firestoreData, setFirestoreData] = useState(null);
+    const firestoreDataRef = React.useRef(null);
     const [firestoreLoading, setFirestoreLoading] = useState(!!userId);
 
     const useFirestore = !!userId;
@@ -42,13 +43,12 @@ export function AppDataProvider({ children, userId }) {
         }
         const userDocRef = doc(db, 'users', userId);
         getDoc(userDocRef).then((snap) => {
-            if (snap.exists()) {
-                setFirestoreData(snap.data());
-            } else {
-                setFirestoreData(DEFAULT_DATA);
-            }
+            const data = snap.exists() ? snap.data() : DEFAULT_DATA;
+            firestoreDataRef.current = data;
+            setFirestoreData(data);
         }).catch((err) => {
             console.error('Firestore load error:', err);
+            firestoreDataRef.current = DEFAULT_DATA;
             setFirestoreData(DEFAULT_DATA);
         }).finally(() => {
             setFirestoreLoading(false);
@@ -57,15 +57,17 @@ export function AppDataProvider({ children, userId }) {
 
     const updateFirestore = async (field, updater) => {
         const userDocRef = doc(db, 'users', userId);
-        const current = firestoreData || DEFAULT_DATA;
+        const current = firestoreDataRef.current || DEFAULT_DATA;
         const currentVal = current[field] ?? (field === 'schedules' || field === 'attendance' ? {} : []);
         const newVal = typeof updater === 'function' ? updater(currentVal) : updater;
         const next = { ...current, [field]: newVal };
+        firestoreDataRef.current = next;
         setFirestoreData(next);
         try {
             await setDoc(userDocRef, next);
         } catch (err) {
             console.error('Firestore save error:', err);
+            firestoreDataRef.current = current;
             setFirestoreData(current);
         }
     };
@@ -93,6 +95,7 @@ export function AppDataProvider({ children, userId }) {
         };
         const userDocRef = doc(db, 'users', userId);
         await setDoc(userDocRef, data);
+        firestoreDataRef.current = data;
         setFirestoreData(data);
     };
 
