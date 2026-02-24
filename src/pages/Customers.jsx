@@ -1,17 +1,14 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useAppData } from '../context/AppDataContext';
 import { useConfirm } from '../context/ConfirmContext';
-import { Plus, Edit2, Trash2, Phone, Mail, MapPin, Users, Camera } from 'lucide-react';
+import { Plus, Edit2, Trash2, Phone, Mail, MapPin, Users } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 function Customers() {
-    const { customers, addCustomer, updateCustomer, removeCustomer, dogs, addDog, updateDog, removeDog, uploadDogPhoto } = useAppData();
+    const { customers, addCustomer, updateCustomer, removeCustomer, dogs, addDog, updateDog, removeDog } = useAppData();
     const { confirm } = useConfirm();
     const [isEditing, setIsEditing] = useState(false);
     const [currentCustomer, setCurrentCustomer] = useState(null);
-    const [uploadingPhotoFor, setUploadingPhotoFor] = useState(null);
-    const fileInputRef = useRef(null);
-    const [pendingPhotoIndex, setPendingPhotoIndex] = useState(null);
 
     const defaultFormState = {
         name: '',
@@ -73,7 +70,7 @@ function Customers() {
         }
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         let customerIdToUse = currentCustomer;
 
@@ -88,25 +85,13 @@ function Customers() {
             });
         }
 
-        // Spara hundar och ladda upp foton om pending
-        for (const dog of formDogs) {
-            const dogId = dog.id;
+        formDogs.forEach(dog => {
             if (dog.createdAt) {
-                updateDog(dogId, { ...dog, customerId: customerIdToUse });
+                updateDog(dog.id, { ...dog, customerId: customerIdToUse });
             } else {
                 addDog({ ...dog, customerId: customerIdToUse, createdAt: new Date().toISOString() });
             }
-            // Ladda upp foto om ett finns i _pendingFile
-            if (dog._pendingFile) {
-                setUploadingPhotoFor(dogId);
-                try {
-                    await uploadDogPhoto(dogId, dog._pendingFile);
-                } catch (err) {
-                    console.error('Foto-uppladdning misslyckades:', err);
-                }
-                setUploadingPhotoFor(null);
-            }
-        }
+        });
 
         handleCloseForm();
     };
@@ -213,34 +198,7 @@ function Customers() {
                                         <Trash2 size={18} />
                                     </button>
 
-                                    <div className="flex items-center gap-3">
-                                        {/* Profilbild / kamera-knapp */}
-                                        <div className="relative flex-shrink-0">
-                                            {dog._previewUrl || dog.photoUrl ? (
-                                                <img
-                                                    src={dog._previewUrl || dog.photoUrl}
-                                                    alt={dog.name}
-                                                    className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
-                                                />
-                                            ) : (
-                                                <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg">
-                                                    {dog.name ? dog.name.charAt(0).toUpperCase() : '🐶'}
-                                                </div>
-                                            )}
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setPendingPhotoIndex(index);
-                                                    fileInputRef.current?.click();
-                                                }}
-                                                className="absolute -bottom-1 -right-1 bg-emerald-600 text-white rounded-full p-1 shadow hover:bg-emerald-700 transition-colors"
-                                                title="Lägg till foto"
-                                            >
-                                                <Camera size={12} />
-                                            </button>
-                                        </div>
-                                        <h4 className="font-medium text-emerald-800">Hund {index + 1}</h4>
-                                    </div>
+                                    <h4 className="font-medium text-emerald-800">Hund {index + 1}</h4>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div>
@@ -259,27 +217,7 @@ function Customers() {
                                 </div>
                             ))}
 
-                            {/* Dold fil-input för fotouppladdning */}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file || pendingPhotoIndex === null) return;
-                                    const previewUrl = URL.createObjectURL(file);
-                                    const newDogs = [...formDogs];
-                                    newDogs[pendingPhotoIndex] = {
-                                        ...newDogs[pendingPhotoIndex],
-                                        _pendingFile: file,
-                                        _previewUrl: previewUrl
-                                    };
-                                    setFormDogs(newDogs);
-                                    setPendingPhotoIndex(null);
-                                    e.target.value = '';
-                                }}
-                            />
+
 
                             <button
                                 type="button"

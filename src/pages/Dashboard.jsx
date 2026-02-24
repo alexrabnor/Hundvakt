@@ -145,18 +145,10 @@ function Dashboard() {
                                     key={dog.id}
                                     className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${isIn ? 'bg-emerald-50 border-emerald-200' : 'bg-white/90 border-stone-200/50'}`}
                                 >
-                                    {/* Foto eller initial */}
-                                    {dog.photoUrl ? (
-                                        <img
-                                            src={dog.photoUrl}
-                                            alt={dog.name}
-                                            className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0"
-                                        />
-                                    ) : (
-                                        <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 text-emerald-700 font-bold text-lg">
-                                            {dog.name.charAt(0)}
-                                        </div>
-                                    )}
+                                    {/* Avatar med initial */}
+                                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 text-emerald-700 font-bold text-lg">
+                                        {dog.name.charAt(0)}
+                                    </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="font-bold text-stone-800">{dog.name}</p>
                                         {owner && <p className="text-xs text-stone-500 truncate">{owner.name}</p>}

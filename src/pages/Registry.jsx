@@ -166,13 +166,9 @@ function Registry() {
                                 <div>
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex items-center gap-3">
-                                            {dog.photoUrl ? (
-                                                <img src={dog.photoUrl} alt={dog.name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow flex-shrink-0" />
-                                            ) : (
-                                                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg flex-shrink-0">
-                                                    {dog.name.charAt(0)}
-                                                </div>
-                                            )}
+                                            <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg flex-shrink-0">
+                                                {dog.name.charAt(0)}
+                                            </div>
                                             <h3 className="text-xl font-bold text-stone-800">{dog.name}</h3>
                                         </div>
                                         <div className="text-emerald-700 font-semibold bg-emerald-50 px-2 py-1 rounded-lg text-sm">
