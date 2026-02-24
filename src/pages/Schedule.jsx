@@ -3,7 +3,8 @@ import { useAppData } from '../context/AppDataContext';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { ChevronLeft, ChevronRight, Copy, Save, Clock } from 'lucide-react';
-import { getISOWeek, getYear, addWeeks, subWeeks } from 'date-fns';
+import { getISOWeek, getYear, addWeeks, subWeeks, startOfISOWeek, addDays, format } from 'date-fns';
+import { sv } from 'date-fns/locale';
 
 const DAYS = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
 
@@ -23,6 +24,10 @@ function Schedule() {
 
     const currentSchedule = schedules[weekKey] || {};
     const previousSchedule = schedules[prevWeekKey];
+
+    // Räkna ut datum för mån–fre den valda veckan
+    const monday = startOfISOWeek(currentDate);
+    const weekDates = DAYS.map((_, i) => addDays(monday, i));
 
     // Initialize missing dogs for the week view so we have a drafted state
     const [draft, setDraft] = useState({});
@@ -176,16 +181,19 @@ function Schedule() {
 
                                         {/* Day Toggles */}
                                         <div className="flex justify-between gap-2 mb-5">
-                                            {DAYS.map(day => (
+                                            {DAYS.map((day, i) => (
                                                 <button
                                                     key={day}
                                                     onClick={() => handleDayToggle(dog.id, day)}
-                                                    className={`flex-1 aspect-square sm:aspect-auto sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center ${data.days.includes(day)
+                                                    className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 ${data.days.includes(day)
                                                         ? 'bg-emerald-600 text-white shadow-md scale-105'
                                                         : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
                                                         }`}
                                                 >
-                                                    {day.substring(0, 3)}
+                                                    <span>{day.substring(0, 3)}</span>
+                                                    <span className={`text-[10px] font-medium ${data.days.includes(day) ? 'text-emerald-100' : 'text-stone-400'}`}>
+                                                        {format(weekDates[i], 'd/M')}
+                                                    </span>
                                                 </button>
                                             ))}
                                         </div>
@@ -219,13 +227,16 @@ function Schedule() {
                 </div>
             ) : (
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    {DAYS.map(day => {
+                    {DAYS.map((day, i) => {
                         const dogsToday = getDogsForDay(day);
+                        const dateLabel = format(weekDates[i], 'EEEE d MMM', { locale: sv });
 
                         return (
                             <div key={day} className="bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-stone-200/50 overflow-hidden">
                                 <div className="bg-stone-100/80 px-4 py-3 border-b border-stone-200/50 flex justify-between items-center">
-                                    <h3 className="font-bold text-stone-800">{day}</h3>
+                                    <div>
+                                        <h3 className="font-bold text-stone-800 capitalize">{dateLabel}</h3>
+                                    </div>
                                     <span className="text-xs font-bold px-2.5 py-1 bg-white text-stone-600 rounded-lg shadow-sm">
                                         {dogsToday.length} {dogsToday.length === 1 ? 'hund' : 'hundar'}
                                     </span>
