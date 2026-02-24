@@ -1,8 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { v4 as uuidv4 } from 'uuid';
-import { db } from '../firebase';
+import { db, storage } from '../firebase';
 
 const DEFAULT_DATA = {
     customers: [],
@@ -118,6 +119,19 @@ export function AppDataProvider({ children, userId }) {
         setFirestoreData(data);
     }, [localCustomers, localDogs, localSchedules, localAttendance, userId]);
 
+    const uploadDogPhoto = useCallback(async (dogId, file) => {
+        if (!userId || !file) return;
+        const path = `users/${userId}/dogs/${dogId}`;
+        const fileRef = storageRef(storage, path);
+        await uploadBytes(fileRef, file);
+        const url = await getDownloadURL(fileRef);
+        // Uppdatera hundens photoUrl i Firestore
+        updateFirestore('dogs', (prev) =>
+            prev.map((d) => (d.id === dogId ? { ...d, photoUrl: url } : d))
+        );
+        return url;
+    }, [userId, updateFirestore]);
+
     // Engångsmigration: hundar med ownerName/ownerPhone -> kunder
     const migrationRunRef = useRef(false);
     useEffect(() => {
@@ -182,6 +196,7 @@ export function AppDataProvider({ children, userId }) {
                 useFirestore,
                 firestoreLoading,
                 importFromLocal,
+                uploadDogPhoto,
                 hasLocalData: localCustomers.length > 0 || localDogs.length > 0
             }}
         >

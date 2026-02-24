@@ -9,6 +9,7 @@ import Customers from './pages/Customers';
 import Schedule from './pages/Schedule';
 import Attendance from './pages/Attendance';
 import Finance from './pages/Finance';
+import Dashboard from './pages/Dashboard';
 import { AppDataProvider } from './context/AppDataContext';
 import { ImportPrompt } from './components/ImportPrompt';
 import { ToastProvider } from './context/ToastContext';
@@ -43,9 +44,10 @@ function App() {
                         </div>
                     ) : (
                         <Routes>
-                            <Route path="/" element={<Intro />} />
+                            <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Intro />} />
                             <Route path="/login" element={<Login />} />
                             <Route element={<ProtectedLayout />}>
+                                <Route path="/dashboard" element={<Dashboard />} />
                                 <Route path="/attendance" element={<Attendance />} />
                                 <Route path="/schedule" element={<Schedule />} />
                                 <Route path="/registry" element={<Registry />} />

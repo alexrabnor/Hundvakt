@@ -1,11 +1,12 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Users, FileText, Calendar, CheckSquare, DollarSign, LogOut } from 'lucide-react';
+import { Users, FileText, Calendar, CheckSquare, DollarSign, LogOut, LayoutDashboard } from 'lucide-react';
 
 function Layout() {
     const { user, logOut } = useAuth();
     const navItems = [
+        { name: 'Hem', path: '/dashboard', icon: LayoutDashboard },
         { name: 'Närvaro', path: '/attendance', icon: CheckSquare },
         { name: 'Veckoplan', path: '/schedule', icon: Calendar },
         { name: 'Ekonomi', path: '/finance', icon: DollarSign },
